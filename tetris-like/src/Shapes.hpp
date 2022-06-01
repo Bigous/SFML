@@ -1,0 +1,14 @@
+#pragma once
+
+enum SHAPES {
+	I_SHAPE = 0,
+	T_SHAPE,
+	L_SHAPE,
+	S_SHAPE,
+	Z_SHAPE,
+	NUMBER_OF_SHAPES,
+	FIRST_SHAPE = I_SHAPE,
+	LAST_SHAPE  = Z_SHAPE
+};
+
+SHAPES getRandomShapeID();
