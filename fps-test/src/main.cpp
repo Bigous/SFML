@@ -19,32 +19,80 @@ int main( int argc, char *argv[] )
 		return 1;
 	}
 
-	sf::RenderWindow window( sf::VideoMode( 640, 480 ), "SFML works!" );
-	sf::Color darkGrey{ 40, 40, 40, 255};
+	const auto &video = sf::VideoMode::getDesktopMode();
 
-	sf::RectangleShape rect1( { 60.f, 60.f } );
-	rect1.setFillColor( sf::Color::Red );
+	// sf::RenderWindow window( sf::VideoMode( 640, 480 ), "SFML works!" );
+	sf::RenderWindow window( video, "", sf::Style::Fullscreen );
+	window.setPosition( { 0, 0 } );
+	sf::Color darkGrey{ 40, 40, 40, 255 };
 
-	sf::RectangleShape rect2( { 60.f, 60.f } );
-	rect2.setFillColor( sf::Color::Green );
+	std::vector< sf::RectangleShape > rects;
+	std::vector< sf::Color >          colors{ sf::Color::Red,    sf::Color::Green,   sf::Color::Blue,
+                                   sf::Color::Yellow, sf::Color::Magenta, sf::Color::Cyan,
+																	 sf::Color(0x3b1e08ff), sf::Color(0xfc6a03ff), sf::Color(0xaf69eeff) };
+	float size       = 180.0f / colors.size() / 640.0f * video.width;
 
-	sf::RectangleShape rect3( { 60.f, 60.f } );
-	rect3.setFillColor( sf::Color::Blue );
+	for( auto &color: colors ) {
+		sf::RectangleShape rect( { size, size } );
+		rect.setFillColor( color );
+		rects.push_back( std::move( rect ) );
+	}
 
 	sf::Text text;
 	text.setFont( font );
 	text.setCharacterSize( 24 );
 	text.setFillColor( sf::Color::White );
 
+	sf::Text input;
+	input.setFont( font );
+	input.setCharacterSize( 24 );
+	input.setFillColor( { 127, 220, 200, 255 } );
+	input.setPosition( { 0, 28 } );
+
+	std::string typed = std::to_string( static_cast< unsigned int >( fps_limit ) );
+
 	auto        t0    = std::chrono::high_resolution_clock::now();
 	double      fps   = 0.0;
 	std::size_t frame = 0;
 
+	float startx     = 290.0f / 640.0f * video.width;
+	float starty     = 240.0f / 480.0f * video.height;
+	float initRadius = 100.0f / 640.0f * video.width;
+
 	while( window.isOpen() ) {
 		sf::Event event;
 		while( window.pollEvent( event ) ) {
-			if( event.type == sf::Event::Closed )
-				window.close();
+			switch( event.type ) {
+				case sf::Event::Closed:
+					window.close();
+					break;
+				case sf::Event::KeyPressed:
+					if( event.key.code == sf::Keyboard::Escape ) {
+						window.close();
+					}
+					break;
+				case sf::Event::Resized:
+					startx     = 290.0f / 640.0f * event.size.width;
+					starty     = 240.0f / 480.0f * event.size.height;
+					initRadius = 100.0f / 640.0f * event.size.width;
+					break;
+				case sf::Event::TextEntered:
+					if( event.text.unicode == '\b' ) {
+						if( !typed.empty() ) {
+							typed.pop_back();
+						}
+					} else if( event.text.unicode == '\r' ) {
+						if( typed.size() > 0 ) {
+							fps_limit = std::stod( typed );
+							typed     = std::to_string( static_cast< unsigned int >( fps_limit ) );
+						}
+					} else if( event.text.unicode >= '0' && event.text.unicode <= '9' ) {
+						typed += static_cast< char >( event.text.unicode );
+					}
+					break;
+				default:
+					break;
+			}
 		}
 
 		auto t1 = std::chrono::high_resolution_clock::now();
@@ -54,23 +102,25 @@ int main( int argc, char *argv[] )
 		if( fps <= fps_limit ) {
 			t0 = t1;
 
-			window.clear(darkGrey);
+			window.clear( darkGrey );
 
 			float a = 0.06f * frame;
-			float t = 2.0f * std::numbers::pi_v< float > / 3.0f;
-			float r = 100.0f * std::cos( 0.1f * a );
+			float t = 2.0f * std::numbers::pi_v< float > / rects.size();
+			float r = initRadius * std::cos( 0.1f * a );
 
-			rect1.setPosition( { 290 + r * std::cos( a ), 240 + r * std::sin( a ) } );
-			window.draw( rect1 );
-
-			rect2.setPosition( { 290 + r * std::cos( a + t ), 240 + r * std::sin( a + t ) } );
-			window.draw( rect2 );
-
-			rect3.setPosition( { 290 + r * std::cos( a + 2 * t ), 240 + r * std::sin( a + 2 * t ) } );
-			window.draw( rect3 );
+			int i = 0;
+			for( auto &rect: rects ) {
+				rect.setPosition( { startx + r * std::cos( a + t * i ), starty + r * std::sin( a + t * i ) } );
+				window.draw( rect );
+				i++;
+			}
 
 			text.setString( std::format( "FPS: {:.3}", fps ) );
 			window.draw( text );
+
+			input.setString( std::format( "FPS limit: {}{}", typed,
+			                              ( static_cast< std::size_t >( frame / fps_limit * 2 ) % 2 == 0 ? "_" : "" ) ) );
+			window.draw( input );
 
 			window.display();
 			frame++;
