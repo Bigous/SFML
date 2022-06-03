@@ -6,6 +6,8 @@
 
 #include <SFML/Graphics.hpp>
 
+#include "TextBox.hpp"
+
 int main( int argc, char *argv[] )
 {
 
@@ -19,18 +21,17 @@ int main( int argc, char *argv[] )
 		return 1;
 	}
 
-	const auto &video = sf::VideoMode::getDesktopMode();
+	// const auto &video = sf::VideoMode::getDesktopMode();
+	const auto video = sf::VideoMode( 640, 480 );
 
-	// sf::RenderWindow window( sf::VideoMode( 640, 480 ), "SFML works!" );
-	sf::RenderWindow window( video, "", sf::Style::Fullscreen );
-	window.setPosition( { 0, 0 } );
-	sf::Color darkGrey{ 40, 40, 40, 255 };
+	sf::RenderWindow window( video, "SFML works!" );
+	sf::Color        darkGrey{ 40, 40, 40, 255 };
 
 	std::vector< sf::RectangleShape > rects;
-	std::vector< sf::Color >          colors{ sf::Color::Red,    sf::Color::Green,   sf::Color::Blue,
-                                   sf::Color::Yellow, sf::Color::Magenta, sf::Color::Cyan,
-																	 sf::Color(0x3b1e08ff), sf::Color(0xfc6a03ff), sf::Color(0xaf69eeff) };
-	float size       = 180.0f / colors.size() / 640.0f * video.width;
+	std::vector< sf::Color >          colors{ sf::Color::Red,          sf::Color::Green,        sf::Color::Blue,
+                                   sf::Color::Yellow,       sf::Color::Magenta,      sf::Color::Cyan,
+                                   sf::Color( 0x3b1e08ff ), sf::Color( 0xfc6a03ff ), sf::Color( 0xaf69eeff ) };
+	float                             size = 180.0f / colors.size() / 640.0f * video.width;
 
 	for( auto &color: colors ) {
 		sf::RectangleShape rect( { size, size } );
@@ -43,13 +44,79 @@ int main( int argc, char *argv[] )
 	text.setCharacterSize( 24 );
 	text.setFillColor( sf::Color::White );
 
-	sf::Text input;
-	input.setFont( font );
-	input.setCharacterSize( 24 );
-	input.setFillColor( { 127, 220, 200, 255 } );
-	input.setPosition( { 0, 28 } );
+	sf::Text tFpsLimit;
+	tFpsLimit.setFont( font );
+	tFpsLimit.setCharacterSize( 24 );
+	tFpsLimit.setFillColor( { 127, 220, 200, 255 } );
+	tFpsLimit.setPosition( { 0, 30 } );
+	tFpsLimit.setString( "FPS Limit: " );
 
-	std::string typed = std::to_string( static_cast< unsigned int >( fps_limit ) );
+	sf::Text tSquaresN;
+	tSquaresN.setFont( font );
+	tSquaresN.setCharacterSize( 24 );
+	tSquaresN.setFillColor( { 127, 220, 200, 255 } );
+	tSquaresN.setPosition( { 0, 64 } );
+	tSquaresN.setString( "Squares Number: " );
+
+	// std::string txtFpsLimit = std::to_string( static_cast< unsigned int >( fps_limit ) );
+
+	TextBox tbFpsLimit( font, 24, { 127, 220, 200, 255 }, { 20, 20, 20, 255 } );
+	tbFpsLimit.setPosition( { 150, 28 } );
+	tbFpsLimit.setSize( 100, 34 );
+	tbFpsLimit.setText( std::to_string( static_cast< unsigned int >( fps_limit ) ) );
+	tbFpsLimit.onTextChanged = [&fps_limit]( const std::string &value ) {
+		if( value.empty() ) {
+			fps_limit = 60;
+		} else {
+			fps_limit = std::stod( value );
+			if( fps_limit < 6 ) {
+				fps_limit = 6;
+			}
+		}
+	};
+	tbFpsLimit.onInputFilter = [&tbFpsLimit]( sf::Event &event ) {
+		// just numbers
+		if( event.type == sf::Event::TextEntered ) {
+			if( event.text.unicode >= '0' && event.text.unicode <= '9' && tbFpsLimit.getText().getSize() < 4 ) {
+				return true;
+			}
+		}
+		return false;
+	};
+	tbFpsLimit.setFocused( true );
+
+	TextBox tbSquareN( font, 24, { 127, 220, 200, 255 }, { 20, 20, 20, 255 } );
+	tbSquareN.setPosition( { 220, 62 } );
+	tbSquareN.setSize( 30, 34 );
+	tbSquareN.setText( std::to_string( rects.size() ) );
+	tbSquareN.onTextChanged = [&fps_limit, &rects, &colors]( const std::string &value ) {
+		int nrects = 3;
+		if( !value.empty() ) {
+			nrects = std::stoi( value );
+		}
+		if( nrects > colors.size() ) {
+			nrects = colors.size();
+		}
+		auto sz = rects[0].getSize();
+		rects.resize( nrects );
+		for(int i = 0; i < nrects; ++i) {
+			sf::RectangleShape rect( sz );
+			rect.setFillColor( colors[i] );
+			rects[i] = std::move( rect );
+		}
+	};
+	tbSquareN.onInputFilter = [&tbSquareN]( sf::Event &event ) {
+		// just numbers
+		if( event.type == sf::Event::TextEntered ) {
+			if( event.text.unicode >= '0' && event.text.unicode <= '9' && tbSquareN.getText().getSize() < 1 ) {
+				return true;
+			}
+		}
+		return false;
+	};
+
+	tbFpsLimit.onFocusLost = [&tbSquareN]() { tbSquareN.setFocused( true ); };
+	tbSquareN.onFocusLost  = [&tbFpsLimit]() { tbFpsLimit.setFocused( true ); };
 
 	auto        t0    = std::chrono::high_resolution_clock::now();
 	double      fps   = 0.0;
@@ -71,27 +138,11 @@ int main( int argc, char *argv[] )
 						window.close();
 					}
 					break;
-				case sf::Event::Resized:
-					startx     = 290.0f / 640.0f * event.size.width;
-					starty     = 240.0f / 480.0f * event.size.height;
-					initRadius = 100.0f / 640.0f * event.size.width;
-					break;
-				case sf::Event::TextEntered:
-					if( event.text.unicode == '\b' ) {
-						if( !typed.empty() ) {
-							typed.pop_back();
-						}
-					} else if( event.text.unicode == '\r' ) {
-						if( typed.size() > 0 ) {
-							fps_limit = std::stod( typed );
-							typed     = std::to_string( static_cast< unsigned int >( fps_limit ) );
-						}
-					} else if( event.text.unicode >= '0' && event.text.unicode <= '9' ) {
-						typed += static_cast< char >( event.text.unicode );
-					}
-					break;
 				default:
 					break;
+			}
+			if(!tbFpsLimit.processEvent( event )) {
+				tbSquareN.processEvent( event );
 			}
 		}
 
@@ -115,12 +166,14 @@ int main( int argc, char *argv[] )
 				i++;
 			}
 
-			text.setString( std::format( "FPS: {:.3}", fps ) );
+			text.setString( std::format( "FPS: {:.3} - Squares: {}/{}", fps, rects.size(), colors.size() ) );
 			window.draw( text );
 
-			input.setString( std::format( "FPS limit: {}{}", typed,
-			                              ( static_cast< std::size_t >( frame / fps_limit * 2 ) % 2 == 0 ? "_" : "" ) ) );
-			window.draw( input );
+			window.draw( tbFpsLimit );
+			window.draw( tFpsLimit );
+
+			window.draw( tSquaresN );
+			window.draw( tbSquareN );
 
 			window.display();
 			frame++;
