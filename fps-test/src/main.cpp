@@ -28,10 +28,11 @@ int main( int argc, char *argv[] )
 	sf::Color        darkGrey{ 40, 40, 40, 255 };
 
 	std::vector< sf::RectangleShape > rects;
-	std::vector< sf::Color >          colors{ sf::Color::Red,          sf::Color::Green,        sf::Color::Blue,
-                                   sf::Color::Yellow,       sf::Color::Magenta,      sf::Color::Cyan,
-                                   sf::Color( 0x3b1e08ff ), sf::Color( 0xfc6a03ff ), sf::Color( 0xaf69eeff ) };
-	float                             size = 180.0f / colors.size() / 640.0f * video.width;
+	std::vector< sf::Color >          colors{
+      sf::Color::Red,  sf::Color::Green,        sf::Color::Blue,         sf::Color::Yellow,       sf::Color::Magenta,
+      sf::Color::Cyan, sf::Color( 0x3b1e08ff ), sf::Color( 0xfc6a03ff ), sf::Color( 0xaf69eeff ),
+  };
+	float size = 180.0f / colors.size() / 640.0f * video.width;
 
 	for( auto &color: colors ) {
 		sf::RectangleShape rect( { size, size } );
@@ -99,7 +100,7 @@ int main( int argc, char *argv[] )
 		}
 		auto sz = rects[0].getSize();
 		rects.resize( nrects );
-		for(int i = 0; i < nrects; ++i) {
+		for( int i = 0; i < nrects; ++i ) {
 			sf::RectangleShape rect( sz );
 			rect.setFillColor( colors[i] );
 			rects[i] = std::move( rect );
@@ -141,7 +142,7 @@ int main( int argc, char *argv[] )
 				default:
 					break;
 			}
-			if(!tbFpsLimit.processEvent( event )) {
+			if( !tbFpsLimit.processEvent( event ) ) {
 				tbSquareN.processEvent( event );
 			}
 		}

@@ -35,9 +35,8 @@ public:
 
 	// Events
 	std::function< void( const sf::String & ) > onTextChanged = []( const sf::String & ) {};
-	std::function< void( void ) >               onFocusLost = []( void ) {};
+	std::function< void( void ) >               onFocusLost   = []( void ) {};
 
 	// Input Filter callback
 	std::function< bool( sf::Event & ) > onInputFilter = []( sf::Event &event ) { return true; };
-
 };

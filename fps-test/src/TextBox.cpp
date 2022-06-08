@@ -37,10 +37,11 @@ void TextBox::refreshTexture()
 void TextBox::setSize( const unsigned int &width, const unsigned int &height )
 {
 	if( height > 6 ) {
-		//m_text.setCharacterSize( height - 4 );
+		// m_text.setCharacterSize( height - 4 );
 		// TODO: improve this...
 		const auto sz = m_renderTexture.getSize();
-		m_sprite.setTextureRect( { 0, 0, static_cast<int>(std::min( width, sz.x )), static_cast<int>(std::min( height, sz.y )) } );
+		m_sprite.setTextureRect(
+				{ 0, 0, static_cast< int >( std::min( width, sz.x ) ), static_cast< int >( std::min( height, sz.y ) ) } );
 		refreshTexture();
 	}
 }
