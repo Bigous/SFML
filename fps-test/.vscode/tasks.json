@@ -23,11 +23,40 @@
             "problemMatcher": [
                 "$msCompile"
             ],
-            "group": "build",
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+        },
+        {
+            "label": "Debug Build C++20 Clean",
+            "type": "cppbuild",
+            "command": "cmake",
+            "args": [
+                "--build",
+                "build",
+                "--config",
+                "Debug",
+                "--target",
+                "ALL_BUILD",
+                "-j",
+                "18",
+                "--clean-first"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
         },
         {
             "label": "Release Build C++20",
-            "type": "cppbuild",
+            "type": "process",
             "command": "cmake",
             "args": [
                 "--build",
@@ -45,7 +74,10 @@
             "problemMatcher": [
                 "$msCompile"
             ],
-            "group": "build",
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
         }
     ]
 }

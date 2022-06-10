@@ -3,6 +3,7 @@
 #include <numbers>  // pi
 #include <string>   // string and stod
 #include <vector>   // vector
+#include <algorithm> // min e max
 
 #include <SFML/Graphics.hpp>
 
@@ -32,10 +33,11 @@ int main( int argc, char *argv[] )
       sf::Color::Red,  sf::Color::Green,        sf::Color::Blue,         sf::Color::Yellow,       sf::Color::Magenta,
       sf::Color::Cyan, sf::Color( 0x3b1e08ff ), sf::Color( 0xfc6a03ff ), sf::Color( 0xaf69eeff ),
   };
-	float size = 180.0f / colors.size() / 640.0f * video.width;
+	float        size = 180.0f / colors.size() / 640.0f * video.width;
+	sf::Vector2f sz{ size, size };
 
 	for( auto &color: colors ) {
-		sf::RectangleShape rect( { size, size } );
+		sf::RectangleShape rect( sz );
 		rect.setFillColor( color );
 		rects.push_back( std::move( rect ) );
 	}
@@ -90,22 +92,24 @@ int main( int argc, char *argv[] )
 	tbSquareN.setPosition( { 220, 62 } );
 	tbSquareN.setSize( 30, 34 );
 	tbSquareN.setText( std::to_string( rects.size() ) );
-	tbSquareN.onTextChanged = [&fps_limit, &rects, &colors]( const std::string &value ) {
-		int nrects = 3;
-		if( !value.empty() ) {
-			nrects = std::stoi( value );
-		}
-		if( nrects > colors.size() ) {
-			nrects = colors.size();
-		}
-		auto sz = rects[0].getSize();
-		rects.resize( nrects );
-		for( int i = 0; i < nrects; ++i ) {
-			sf::RectangleShape rect( sz );
-			rect.setFillColor( colors[i] );
-			rects[i] = std::move( rect );
+
+	tbSquareN.onTextChanged = [&fps_limit, &rects, &colors, &sz]( const std::string &value ) {
+		if( value.empty() ) 
+			return;
+
+		auto nrects = std::min(std::max( 1, std::stoi( value ) ), (int)colors.size());
+
+		auto oldSize = rects.size();
+		rects.resize( static_cast< int >( nrects ) );
+		if( oldSize < nrects ) {
+			for( int i = 0; i < nrects; ++i ) {
+				sf::RectangleShape rect( sz );
+				rect.setFillColor( colors[i] );
+				rects[i] = std::move( rect );
+			}
 		}
 	};
+
 	tbSquareN.onInputFilter = [&tbSquareN]( sf::Event &event ) {
 		// just numbers
 		if( event.type == sf::Event::TextEntered ) {
@@ -133,10 +137,11 @@ int main( int argc, char *argv[] )
 			switch( event.type ) {
 				case sf::Event::Closed:
 					window.close();
-					break;
+					return 0;
 				case sf::Event::KeyPressed:
 					if( event.key.code == sf::Keyboard::Escape ) {
 						window.close();
+						return 0;
 					}
 					break;
 				default:

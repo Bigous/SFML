@@ -22,11 +22,13 @@
             "request": "launch",
             "program": "${workspaceFolder}\\build\\Release\\${workspaceFolderBasename}.exe",
             "args": [],
-            "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
             "console": "integratedTerminal",
-            "preLaunchTask": "Release Build C++20"
+            "preLaunchTask": {
+                "task": "Release Build C++20",
+                "type": ""
+            }
         }
     ]
 }
